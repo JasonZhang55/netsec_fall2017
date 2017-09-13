@@ -5,7 +5,8 @@ from playground.network.testing import MockTransportToStorageStream
 from playground.network.testing import  MockTransportToProtocol
 import asyncio
 
-#Packet realize
+
+# Packet definition
 class RequestLogIn(PacketType):
     DEFINITION_IDENTIFIER = "lab1b.student_Runjie.RequestLogIn"
     DEFINITION_VERSION = "1.0"
@@ -82,7 +83,8 @@ class Result(PacketType):
     FIELDS = [("ID", UINT32),
               ("passfail", STRING)]
 
-#Protocol realize
+
+# Protocol realize
 class EchoClientProtocol():
     def __init__(self):
         self.transport = None
@@ -113,9 +115,8 @@ class EchoClientProtocol():
     def connection_made(self, transport):
         print("Echo client connected to server!")
         self.transport = transport
-        print(self.packet1.requestLogIn, self.packet1.ID)
-        self.transport.write(self.packet1Bytes)
-        self.deserializer = PacketType.Deserializer()
+        # print(self.packet1.requestLogIn, self.packet1.ID)
+        # self.transport.write(self.packet1Bytes)
 
     def data_received(self, data):
         # print("Client is receiving data")
@@ -140,6 +141,12 @@ class EchoClientProtocol():
 
             elif isinstance(pkt, Result):
                 print("Log in finish.")
+
+        # self.transport.close()
+
+    def send_request(self):
+        print(self.packet1.requestLogIn, self.packet1.ID)
+        self.transport.write(self.packet1Bytes)
 
     def connection_lost(self, exc):
         self.transport = None
@@ -225,15 +232,16 @@ class EchoServerProtocol():
         self.transport = None
 
 
+
 def basicProtocolTest():
     asyncio.set_event_loop(TestLoopEx())
-    client = EchoClientProtocol()
-    server = EchoServerProtocol()
-    transportToServer = MockTransportToProtocol(server)
-    transportToClient = MockTransportToProtocol(client)
-    server.connection_made(transportToClient)
-    client.connection_made(transportToServer)
+    clientProtocol = EchoClientProtocol()
+    serverProtocol = EchoServerProtocol()
+    cTransport, sTransport = MockTransportToProtocol.CreateTransportPair(clientProtocol, serverProtocol)
+    clientProtocol.connection_made(cTransport)
+    serverProtocol.connection_made(sTransport)
 
+    clientProtocol.send_request()
 
 
 if __name__ == "__main__":
